@@ -5,7 +5,10 @@ include(cmake/pkg.cmake)
 
 add_library(boost INTERFACE)
 target_include_directories(boost SYSTEM INTERFACE .)
-target_compile_definitions(boost INTERFACE BOOST_BIND_GLOBAL_PLACEHOLDERS=1)
+target_compile_definitions(boost INTERFACE
+    BOOST_BIND_GLOBAL_PLACEHOLDERS=1
+    BOOST_ALL_NO_LIB=1
+)
 
 file(GLOB libs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/libs ${CMAKE_CURRENT_SOURCE_DIR}/libs/*)
 list(REMOVE_ITEM libs ".DS_Store")
@@ -24,6 +27,11 @@ foreach(lib ${libs})
     endif()
     add_library(boost-${lib} ${boost-${lib}-files})
     target_link_libraries(boost-${lib} boost)
+    if (MSVC)
+        target_compile_options(boost-${lib} PRIVATE /w)
+    else()
+        target_compile_options(boost-${lib} PRIVATE -w)
+    endif()
 endforeach()
 
-target_link_libraries(boost-iostreams zlib)
+target_link_libraries(boost-iostreams zlibstatic)
