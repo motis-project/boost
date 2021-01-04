@@ -1,8 +1,10 @@
 project(boost)
 cmake_minimum_required(VERSION 3.19)
 
+include(cmake/pkg.cmake)
+
 add_library(boost INTERFACE)
-target_include_directories(boost INTERFACE .)
+target_include_directories(boost SYSTEM INTERFACE .)
 target_compile_definitions(boost INTERFACE BOOST_BIND_GLOBAL_PLACEHOLDERS=1)
 
 file(GLOB libs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/libs ${CMAKE_CURRENT_SOURCE_DIR}/libs/*)
@@ -23,3 +25,5 @@ foreach(lib ${libs})
     add_library(boost-${lib} ${boost-${lib}-files})
     target_link_libraries(boost-${lib} boost)
 endforeach()
+
+target_link_libraries(boost-iostreams zlib)
