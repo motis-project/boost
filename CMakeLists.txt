@@ -14,6 +14,15 @@ file(GLOB libs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/libs ${CMAKE_CURRENT_SOURCE_
 list(REMOVE_ITEM libs ".DS_Store")
 foreach(lib ${libs})
     file(GLOB_RECURSE boost-${lib}-files ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/**.cpp)
+
+    if (WIN32)
+        file(GLOB unwanted-system-specific ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/pthread/*.cpp)
+    else()
+        file(GLOB unwanted-system-specific ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/win32/*.cpp)
+    endif()
+
+    message(STATUS "BOOST ${lib}: \"${unwanted-system-specific}\"")
+
     file(GLOB unwanted
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/*/bzip2.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/*/lzma.cpp
@@ -22,8 +31,11 @@ foreach(lib ${libs})
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/gregorian/date_generators.cpp
     )
     list(LENGTH unwanted unwanted-length)
-    if (${unwanted-length})
+    if (unwanted-length)
         list(REMOVE_ITEM boost-${lib}-files ${unwanted})
+    endif()
+    if (unwanted-system-specific)
+        list(REMOVE_ITEM boost-${lib}-files ${unwanted-system-specific})
     endif()
     add_library(boost-${lib} ${boost-${lib}-files})
     target_link_libraries(boost-${lib} boost)
