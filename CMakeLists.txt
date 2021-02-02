@@ -21,8 +21,6 @@ foreach(lib ${libs})
         file(GLOB unwanted-system-specific ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/win32/*.cpp)
     endif()
 
-    message(STATUS "BOOST ${lib}: \"${unwanted-system-specific}\"")
-
     file(GLOB unwanted
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/*/bzip2.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/*/lzma.cpp
