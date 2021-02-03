@@ -9,6 +9,12 @@ target_compile_definitions(boost INTERFACE
     BOOST_BIND_GLOBAL_PLACEHOLDERS=1
     BOOST_ALL_NO_LIB=1
 )
+if (WIN32)
+    target_compile_definitions(boost INTERFACE
+        BOOST_THREAD_BUILD_LIB=1
+        BOOST_THREAD_WIN32=1
+    )
+endif()
 
 file(GLOB libs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/libs ${CMAKE_CURRENT_SOURCE_DIR}/libs/*)
 list(REMOVE_ITEM libs ".DS_Store")
