@@ -13,6 +13,7 @@ if (WIN32)
     target_compile_definitions(boost INTERFACE
         BOOST_THREAD_BUILD_LIB=1
         BOOST_THREAD_WIN32=1
+        WIN32_LEAN_AND_MEAN=1
     )
 endif()
 
