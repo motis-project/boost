@@ -49,6 +49,11 @@ foreach(lib ${libs})
     else()
         target_compile_options(boost-${lib} PRIVATE -w)
     endif()
+
+    if (lib STREQUAL "filesystem")
+        target_compile_definitions(boost-${lib} PRIVATE BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
+        target_link_libraries(boost-${lib} boost-atomic)
+    endif()
 endforeach()
 
 target_link_libraries(boost-iostreams zlibstatic)
