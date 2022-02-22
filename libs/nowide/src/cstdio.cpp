@@ -25,6 +25,7 @@ namespace nowide {
         FILE* wfopen(const wchar_t* filename, const wchar_t* mode)
         {
 #ifdef BOOST_WINDOWS
+            // coverity[var_deref_model]
             return ::_wfopen(filename, mode);
 #else
             const stackstring name(filename);
@@ -42,7 +43,7 @@ namespace nowide {
     {
         const wstackstring wname(file_name);
         const wshort_stackstring wmode(mode);
-        return _wfreopen(wname.get(), wmode.get(), stream);
+        return _wfreopen(wname.get(), wmode.get(), stream); // coverity[var_deref_model]
     }
     ///
     /// \brief Same as fopen but file_name and mode are UTF-8 strings
@@ -51,7 +52,7 @@ namespace nowide {
     {
         const wstackstring wname(file_name);
         const wshort_stackstring wmode(mode);
-        return _wfopen(wname.get(), wmode.get());
+        return detail::wfopen(wname.get(), wmode.get()); // coverity[var_deref_model]
     }
     ///
     /// \brief Same as rename but old_name and new_name are UTF-8 strings

@@ -5,8 +5,8 @@
 // Copyright (c) 2011-2017 Adam Wulkiewicz, Lodz, Poland.
 // Copyright (c) 2020 Caian Benedicto, Campinas, Brazil.
 //
-// This file was modified by Oracle on 2019.
-// Modifications copyright (c) 2019 Oracle and/or its affiliates.
+// This file was modified by Oracle on 2019-2021.
+// Modifications copyright (c) 2019-2021 Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 //
 // Use, modification and distribution is subject to the Boost Software License,
@@ -18,12 +18,15 @@
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <boost/geometry/algorithms/detail/expand_by_epsilon.hpp>
 #include <boost/geometry/algorithms/expand.hpp>
+
+#include <boost/geometry/index/detail/algorithms/content.hpp>
 #include <boost/geometry/index/detail/algorithms/bounds.hpp>
 #include <boost/geometry/index/detail/algorithms/nth_element.hpp>
+#include <boost/geometry/index/detail/rtree/node/node_elements.hpp>
 #include <boost/geometry/index/detail/rtree/node/subtree_destroyer.hpp>
-
-#include <boost/geometry/algorithms/detail/expand_by_epsilon.hpp>
+#include <boost/geometry/index/parameters.hpp>
 
 namespace boost { namespace geometry { namespace index { namespace detail { namespace rtree {
 
@@ -182,7 +185,7 @@ public:
                        TmpAlloc const& temp_allocator)
     {
         typedef typename std::iterator_traits<InIt>::difference_type diff_type;
-
+            
         diff_type diff = std::distance(first, last);
         if ( diff <= 0 )
             return node_pointer(0);
@@ -197,7 +200,9 @@ public:
         values_count = static_cast<size_type>(diff);
         entries.reserve(values_count);
 
-        expandable_box<box_type, strategy_type> hint_box(detail::get_strategy(parameters));
+        auto const& strategy = index::detail::get_strategy(parameters);
+        
+        expandable_box<box_type, strategy_type> hint_box(strategy);
         for ( ; first != last ; ++first )
         {
             // NOTE: support for iterators not returning true references adapted
@@ -209,12 +214,12 @@ public:
 
             // NOTE: added for consistency with insert()
             // CONSIDER: alternative - ignore invalid indexable or throw an exception
-            // BOOST_GEOMETRY_INDEX_ASSERT(detail::is_valid(indexable), "Indexable is invalid");
+            BOOST_GEOMETRY_INDEX_ASSERT(detail::is_valid(indexable), "Indexable is invalid");
 
             hint_box.expand(indexable);
 
             point_type pt;
-            geometry::centroid(indexable, pt);
+            geometry::centroid(indexable, pt, strategy);
             entries.push_back(std::make_pair(pt, first));
         }
 
@@ -359,7 +364,7 @@ private:
         rtree::elements(in).reserve(nodes_count);                                                           // MAY THROW (A)
         // calculate values box and copy values
         expandable_box<box_type, strategy_type> elements_box(detail::get_strategy(parameters));
-
+        
         per_level_packets(first, last, hint_box, values_count, subtree_counts, next_subtree_counts,
                           rtree::elements(in), elements_box,
                           parameters, translator, allocators);
@@ -404,7 +409,7 @@ private:
             elements_box.expand(el.first);
             return;
         }
-
+        
         size_type median_count = calculate_median_count(values_count, subtree_counts);
         EIt median = first + median_count;
 
@@ -414,7 +419,7 @@ private:
         box_type left, right;
         pack_utils::nth_element_and_half_boxes<0, dimension>
             ::apply(first, median, last, hint_box, left, right, greatest_dim_index);
-
+        
         per_level_packets(first, median, left,
                           median_count, subtree_counts, next_subtree_counts,
                           elements, elements_box,
