@@ -17,15 +17,45 @@ if (WIN32)
     )
 endif()
 
+# these libraries don't compile with this generic config
+set(disabled-libs
+    context
+    fiber
+    graph_parallel
+    locale
+    log
+    math
+    metaparse
+    mpi
+    mpl
+    python
+    spirit
+    stacktrace
+)
+
+set(manual-libs
+    atomic
+    filesystem
+)
+
 file(GLOB libs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/libs ${CMAKE_CURRENT_SOURCE_DIR}/libs/*)
 list(REMOVE_ITEM libs ".DS_Store")
+list(REMOVE_ITEM libs ${disabled-libs})
+list(REMOVE_ITEM libs ${manual-libs})
+
 foreach(lib ${libs})
     file(GLOB_RECURSE boost-${lib}-files ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/**.cpp)
 
     if (WIN32)
-        file(GLOB unwanted-system-specific ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/pthread/*.cpp)
+        file(GLOB unwanted-system-specific
+            ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/pthread/*.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/posix/*.cpp
+        )
     else()
-        file(GLOB unwanted-system-specific ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/win32/*.cpp)
+        file(GLOB unwanted-system-specific
+            ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/win32/*.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/windows/*.cpp
+        )
     endif()
 
     file(GLOB unwanted
@@ -49,11 +79,10 @@ foreach(lib ${libs})
     else()
         target_compile_options(boost-${lib} PRIVATE -w)
     endif()
+endforeach()
 
-    if (lib STREQUAL "filesystem")
-        target_compile_definitions(boost-${lib} PRIVATE BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
-        target_link_libraries(boost-${lib} boost-atomic)
-    endif()
+foreach(lib ${manual-libs})
+    add_subdirectory(libs/${lib})
 endforeach()
 
 target_link_libraries(boost-iostreams zlibstatic)
