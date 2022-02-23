@@ -17,6 +17,7 @@
 #include <boost/json/detail/buffer.hpp>
 #include <boost/json/detail/sse2.hpp>
 #include <cmath>
+#include <climits>
 #include <cstring>
 
 #ifdef _MSC_VER
@@ -144,13 +145,20 @@ dec_to_float(
     std::int32_t e,
     bool neg) noexcept
 {
-    auto x =
-        static_cast<double>(m);
+    // convert to double explicitly to silence warnings
+    double x = static_cast<double>(m);
     if(neg)
         x = -x;
+
     if(e < -305)
-        return x * 1e-305 *
-            pow10(e+305);
+    {
+        x *= 1e-305 ;
+        e += 305;
+    }
+
+    if(e >= -22 && e < 0)
+        return x / pow10(-e);
+
     return x * pow10(e);
 }
 
@@ -190,7 +198,7 @@ reserve()
     // to avoid reallocation during suspend.
     st_.reserve(
         sizeof(state) + // document parsing state
-        (sizeof(state) + 
+        (sizeof(state) +
             sizeof(std::size_t)) * depth() + // array and object state + size
         sizeof(state) + // value parsing state
         sizeof(std::size_t) + // string size
@@ -276,7 +284,7 @@ template<class Handler>
 const char*
 basic_parser<Handler>::
 fail(
-    const char* p, 
+    const char* p,
     error ev) noexcept
 {
     end_ = p;
@@ -288,7 +296,7 @@ template<class Handler>
 const char*
 basic_parser<Handler>::
 maybe_suspend(
-    const char* p, 
+    const char* p,
     state st)
 {
     end_ = p;
@@ -305,7 +313,7 @@ template<class Handler>
 const char*
 basic_parser<Handler>::
 maybe_suspend(
-    const char* p, 
+    const char* p,
     state st,
     std::size_t n)
 {
@@ -324,7 +332,7 @@ template<class Handler>
 const char*
 basic_parser<Handler>::
 maybe_suspend(
-    const char* p, 
+    const char* p,
     state st,
     const number& num)
 {
@@ -343,7 +351,7 @@ template<class Handler>
 const char*
 basic_parser<Handler>::
 suspend(
-    const char* p, 
+    const char* p,
     state st)
 {
     end_ = p;
@@ -357,7 +365,7 @@ template<class Handler>
 const char*
 basic_parser<Handler>::
 suspend(
-    const char* p, 
+    const char* p,
     state st,
     const number& num)
 {
@@ -653,8 +661,8 @@ resume_value(const char* p,
     case state::str1:
         return parse_unescaped(p, stack_empty, std::false_type(), allow_bad_utf8);
 
-    case state::str2: case state::str3: 
-    case state::str4: case state::str5: 
+    case state::str2: case state::str3:
+    case state::str4: case state::str5:
     case state::str6: case state::str7:
     case state::str8:
     case state::sur1: case state::sur2:
@@ -670,8 +678,8 @@ resume_value(const char* p,
     case state::obj1: case state::obj2:
     case state::obj3: case state::obj4:
     case state::obj5: case state::obj6:
-    case state::obj7: case state::obj8: 
-    case state::obj9: case state::obj10: 
+    case state::obj7: case state::obj8:
+    case state::obj9: case state::obj10:
     case state::obj11:
         return parse_object(p, stack_empty, allow_comments, allow_trailing, allow_bad_utf8);
 
@@ -918,8 +926,8 @@ parse_string(const char* p,
         case state::str1:
             return parse_unescaped(p, stack_empty, is_key, allow_bad_utf8);
 
-        case state::str2: case state::str3: 
-        case state::str4: case state::str5: 
+        case state::str2: case state::str3:
+        case state::str4: case state::str5:
         case state::str6: case state::str7:
         case state::str8:
         case state::sur1: case state::sur2:
@@ -966,17 +974,17 @@ parse_unescaped(const char* p,
     if(is_key)
     {
         BOOST_ASSERT(total <= Handler::max_key_size);
-        if(BOOST_JSON_UNLIKELY(size > 
+        if(BOOST_JSON_UNLIKELY(size >
             Handler::max_key_size - total))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::key_too_large);
     }
     else
     {
         BOOST_ASSERT(total <= Handler::max_string_size);
-        if(BOOST_JSON_UNLIKELY(size > 
+        if(BOOST_JSON_UNLIKELY(size >
             Handler::max_string_size - total))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::string_too_large);
     }
     total += size;
@@ -1005,7 +1013,7 @@ parse_unescaped(const char* p,
         {
             seq_.save(cs.begin(), cs.remain());
             if(BOOST_JSON_UNLIKELY(seq_.complete()))
-                return fail(cs.begin(), error::syntax); 
+                return fail(cs.begin(), error::syntax);
             if(BOOST_JSON_LIKELY(size))
             {
                 {
@@ -1212,7 +1220,7 @@ do_str3:
                     ++cs;
                 if(d3 != -1)
                     ++cs;
-                return fail(cs.begin(), 
+                return fail(cs.begin(),
                     error::expected_hex_digit);
             }
             // 32 bit unicode scalar value
@@ -1231,7 +1239,7 @@ do_str3:
                 break;
             }
             if(BOOST_JSON_UNLIKELY(u1 > 0xdbff))
-                return fail(cs.begin(), 
+                return fail(cs.begin(),
                     error::illegal_leading_surrogate);
             cs += 5;
             // KRYSTIAN TODO: this can be a two byte load
@@ -1261,7 +1269,7 @@ do_str3:
                     ++cs;
                 if(d3 != -1)
                     ++cs;
-                return fail(cs.begin(), 
+                return fail(cs.begin(),
                     error::expected_hex_digit);
             }
             unsigned const u2 =
@@ -1270,7 +1278,7 @@ do_str3:
             // valid trailing surrogates are [DC00, DFFF]
             if(BOOST_JSON_UNLIKELY(
                 u2 < 0xdc00 || u2 > 0xdfff))
-                return fail(cs.begin(), 
+                return fail(cs.begin(),
                     error::illegal_trailing_surrogate);
             cs += 4;
             unsigned cp =
@@ -1307,7 +1315,7 @@ do_str4:
             return maybe_suspend(cs.begin(), state::str4, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u1_ = digit << 12;
@@ -1316,7 +1324,7 @@ do_str5:
             return maybe_suspend(cs.begin(), state::str5, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u1_ += digit << 8;
@@ -1325,7 +1333,7 @@ do_str6:
             return maybe_suspend(cs.begin(), state::str6, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u1_ += digit << 4;
@@ -1334,7 +1342,7 @@ do_str7:
             return maybe_suspend(cs.begin(), state::str7, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u1_ += digit;
@@ -1347,7 +1355,7 @@ do_str7:
             break;
         }
         if(BOOST_JSON_UNLIKELY(u1_ > 0xdbff))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::illegal_trailing_surrogate);
 do_sur1:
         if(BOOST_JSON_UNLIKELY(! cs))
@@ -1366,7 +1374,7 @@ do_sur3:
             return maybe_suspend(cs.begin(), state::sur3, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u2_ = digit << 12;
@@ -1375,7 +1383,7 @@ do_sur4:
             return maybe_suspend(cs.begin(), state::sur4, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u2_ += digit << 8;
@@ -1384,7 +1392,7 @@ do_sur5:
             return maybe_suspend(cs.begin(), state::sur5, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u2_ += digit << 4;
@@ -1393,13 +1401,13 @@ do_sur6:
             return maybe_suspend(cs.begin(), state::sur6, total);
         digit = detail::hex_digit(*cs);
         if(BOOST_JSON_UNLIKELY(digit == -1))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         ++cs;
         u2_ += digit;
         if(BOOST_JSON_UNLIKELY(
             u2_ < 0xdc00 || u2_ > 0xdfff))
-            return fail(cs.begin(), 
+            return fail(cs.begin(),
                 error::expected_hex_digit);
         unsigned cp =
             ((u1_ - 0xd800) << 10) +
@@ -1415,7 +1423,7 @@ do_str2:
     for(;;)
     {
         if(BOOST_JSON_UNLIKELY(! cs))
-        { 
+        {
             // flush
             if(BOOST_JSON_LIKELY(! temp.empty()))
             {
@@ -1480,7 +1488,7 @@ do_str2:
                     temp.clear();
                 }
                 cs = cs.end();
-                // ensure there is room for the saved byte sequence 
+                // ensure there is room for the saved byte sequence
                 cs.clip(temp.max_size() - seq_.length());
                 goto do_str8;
             }
@@ -1584,7 +1592,7 @@ do_obj2:
             return fail(cs.begin(), error::syntax);
         }
 loop:
-        if(BOOST_JSON_UNLIKELY(++size > 
+        if(BOOST_JSON_UNLIKELY(++size >
             Handler::max_object_size))
             return fail(cs.begin(), error::object_too_large);
 do_obj3:
@@ -1728,7 +1736,7 @@ do_arr2:
             goto do_arr1;
         }
 loop:
-        if(BOOST_JSON_UNLIKELY(++size > 
+        if(BOOST_JSON_UNLIKELY(++size >
             Handler::max_array_size))
             return fail(cs.begin(), error::array_too_large);
 do_arr3:
@@ -1818,7 +1826,7 @@ parse_number(const char* p,
         {
             int n1;
 
-            if( nonzero_first || 
+            if( nonzero_first ||
                 (negative && *cs != '0') )
             {
                 n1 = detail::count_digits( cs.begin() );
@@ -1834,7 +1842,7 @@ parse_number(const char* p,
 
                 cs += n1;
 
-                // integer or floating-point with 
+                // integer or floating-point with
                 // >= 16 leading digits
                 if( n1 == 16 )
                 {
@@ -2003,7 +2011,7 @@ do_num2:
                 if( num.mant  > 922337203685477580 || (
                     num.mant == 922337203685477580 && c > '8'))
                     break;
-                num.mant = 10 * num.mant + c - '0';
+                num.mant = 10 * num.mant + ( c - '0' );
                 continue;
             }
             goto do_num6; // [.eE]
@@ -2034,7 +2042,7 @@ do_num2:
                 if( num.mant  > 1844674407370955161 || (
                     num.mant == 1844674407370955161 && c > '5'))
                     break;
-                num.mant = 10 * num.mant + c - '0';
+                num.mant = 10 * num.mant + ( c - '0' );
             }
             else
             {
@@ -2253,7 +2261,7 @@ do_num8:
                 num.mant <= 9007199254740991)) // 2^53-1
             {
                 --num.bias;
-                num.mant = 10 * num.mant + c - '0';
+                num.mant = 10 * num.mant + ( c - '0' );
             }
             else
             {
@@ -2344,20 +2352,33 @@ do_exp3:
                     return fail(cs.begin());
                 return suspend(cs.begin(), state::exp3, num);
             }
-            goto finish_dub;
         }
-        char const c = *cs;
-        if(BOOST_JSON_LIKELY(
-            c >= '0' && c <= '9'))
+        else
         {
-            if(BOOST_JSON_UNLIKELY
-            //              2147483647 INT_MAX
-                (num.exp  > 214748364 || (
-                    num.exp == 214748364 && c > '7')))
+            char const c = *cs;
+            if(BOOST_JSON_LIKELY(
+                c >= '0' && c <= '9'))
+            {
+                if(BOOST_JSON_UNLIKELY
+                //              2147483647 INT_MAX
+                    (num.exp  > 214748364 || (
+                        num.exp == 214748364 && c > '7')))
+                    return fail(cs.begin(), error::exponent_overflow);
+                ++cs;
+                num.exp = 10 * num.exp + ( c - '0' );
+                continue;
+            }
+        }
+        BOOST_ASSERT(num.exp >= 0);
+        if ( num.frac )
+        {
+            if (BOOST_JSON_UNLIKELY( num.bias  < (INT_MIN + num.exp) ))
                 return fail(cs.begin(), error::exponent_overflow);
-            ++cs;
-            num.exp = 10 * num.exp + c - '0';
-            continue;
+        }
+        else
+        {
+            if (BOOST_JSON_UNLIKELY( num.bias > (INT_MAX - num.exp) ))
+                return fail(cs.begin(), error::exponent_overflow);
         }
         goto finish_dub;
     }
@@ -2405,7 +2426,7 @@ basic_parser(
     parse_options const& opt,
     Args&&... args)
     : h_(std::forward<Args>(args)...)
-    , opt_(opt) 
+    , opt_(opt)
 {
 }
 
