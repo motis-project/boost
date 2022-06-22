@@ -160,22 +160,23 @@ if(BOOST_FILESYSTEM_HAS_FDOPENDIR_NOFOLLOW)
     target_compile_definitions(boost_filesystem PRIVATE BOOST_FILESYSTEM_HAS_FDOPENDIR_NOFOLLOW)
 endif()
 
-target_link_libraries(boost_filesystem
-    PUBLIC
-        Boost::assert
-        Boost::config
-        Boost::container_hash
-        Boost::core
-        Boost::detail
-        Boost::io
-        Boost::iterator
-        Boost::smart_ptr
-        Boost::system
-        Boost::type_traits
-
-    PRIVATE
-        Boost::predef
-)
+#target_link_libraries(boost_filesystem
+#    PUBLIC
+#        Boost::assert
+#        Boost::config
+#        Boost::container_hash
+#        Boost::core
+#        Boost::detail
+#        Boost::io
+#        Boost::iterator
+#        Boost::smart_ptr
+#        Boost::system
+#        Boost::type_traits
+#
+#    PRIVATE
+#        Boost::predef
+#)
+target_link_libraries(boost_filesystem PUBLIC boost)
 
 if(NOT BOOST_FILESYSTEM_HAS_CXX20_ATOMIC_REF)
     target_compile_definitions(boost_filesystem PRIVATE BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
@@ -198,8 +199,8 @@ if(WIN32)
         endif()
     endif()
 
-    target_link_libraries(boost_filesystem
-        PRIVATE
-            Boost::winapi
-    )
+    #target_link_libraries(boost_filesystem
+    #    PRIVATE
+    #        Boost::winapi
+    #)
 endif()
