@@ -1,6 +1,6 @@
 # Copyright 2018 Mike Dev
 # Copyright 2019 Peter Dimov
-# Copyright 2020-2021 Andrey Semashev
+# Copyright 2020-2022 Andrey Semashev
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt
 
@@ -12,28 +12,13 @@ include(CheckCXXSourceCompiles)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# Generates a list of include paths for all Boost libraries in \a result variable. Uses unified Boost include tree, if available.
-function(generate_boost_include_paths result)
-    if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../boost" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../boost/version.hpp")
-        set(${result} "${CMAKE_CURRENT_SOURCE_DIR}/../.." PARENT_SCOPE)
-        return()
-    endif()
-    file(GLOB path_list LIST_DIRECTORIES True "${CMAKE_CURRENT_SOURCE_DIR}/../*")
-    foreach(path IN LISTS path_list)
-        if (IS_DIRECTORY "${path}/include")
-            list(APPEND include_list "${path}/include")
-        endif()
-    endforeach()
-    set(${result} ${include_list} PARENT_SCOPE)
-endfunction()
-
 # Note: We can't use the Boost::library targets in the configure checks as they may not yet be included
 # by the superproject when this CMakeLists.txt is included. We also don't want to hardcode include paths
 # of the needed libraries and their dependencies, recursively, as this is too fragile and requires maintenance.
 # Instead, we collect include paths of all libraries and use them in the configure checks. This works faster
 # if there is a unified Boost include tree in the filesystem (i.e. if `b2 headers` was run or we're in the
 # official monolithic Boost distribution tree).
-generate_boost_include_paths(BOOST_LIBRARY_INCLUDES)
+include(cmake/BoostLibraryIncludes.cmake)
 
 set(boost_atomic_sources src/lock_pool.cpp)
 
@@ -100,31 +85,29 @@ endif()
 
 add_library(boost_atomic ${boost_atomic_sources})
 add_library(Boost::atomic ALIAS boost_atomic)
-add_library(boost-atomic ALIAS boost_atomic)
 
 target_include_directories(boost_atomic PUBLIC include)
 target_include_directories(boost_atomic PRIVATE src)
 
-#target_link_libraries(boost_atomic
-#    PUBLIC
-#        Boost::assert
-#        Boost::config
-#        Boost::static_assert
-#        Boost::type_traits
-#    PRIVATE
-#        Boost::align
-#        Boost::predef
-#        Boost::preprocessor
-#
-#        Threads::Threads
-#)
-target_link_libraries(boost_atomic boost)
+target_link_libraries(boost_atomic
+    PUBLIC
+        Boost::assert
+        Boost::config
+        Boost::static_assert
+        Boost::type_traits
+    PRIVATE
+        Boost::align
+        Boost::predef
+        Boost::preprocessor
+
+        Threads::Threads
+)
 
 if (WIN32)
-    #target_link_libraries(boost_atomic
-    #    PUBLIC
-    #        Boost::winapi
-    #)
+    target_link_libraries(boost_atomic
+        PUBLIC
+            Boost::winapi
+    )
 
     if (BOOST_ATOMIC_HAS_SYNCHRONIZATION_LIB)
         target_link_libraries(boost_atomic PUBLIC synchronization)
