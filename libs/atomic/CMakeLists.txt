@@ -85,6 +85,7 @@ endif()
 
 add_library(boost_atomic ${boost_atomic_sources})
 add_library(Boost::atomic ALIAS boost_atomic)
+add_library(boost-atomic ALIAS boost_atomic)
 
 target_include_directories(boost_atomic PUBLIC include)
 target_include_directories(boost_atomic PRIVATE src)
