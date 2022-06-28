@@ -86,3 +86,7 @@ foreach(lib ${manual-libs})
 endforeach()
 
 target_link_libraries(boost-iostreams zlibstatic)
+
+if (MSVC)
+  target_compile_definitions(boost INTERFACE BOOST_ASIO_HAS_ALIGNOF=1)
+endif()
