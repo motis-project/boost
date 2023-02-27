@@ -20,6 +20,7 @@ endif()
 # these libraries don't compile with this generic config
 set(disabled-libs
     context
+    exception
     fiber
     graph_parallel
     locale
@@ -44,7 +45,7 @@ list(REMOVE_ITEM libs ${disabled-libs})
 list(REMOVE_ITEM libs ${manual-libs})
 
 foreach(lib ${libs})
-    file(GLOB_RECURSE boost-${lib}-files ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/**.cpp)
+    file(GLOB_RECURSE boost-${lib}-files ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/**.cpp)
 
     if (WIN32)
         file(GLOB unwanted-system-specific
