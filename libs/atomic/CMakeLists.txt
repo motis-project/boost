@@ -89,19 +89,20 @@ add_library(Boost::atomic ALIAS boost_atomic)
 target_include_directories(boost_atomic PUBLIC include)
 target_include_directories(boost_atomic PRIVATE src)
 
-#target_link_libraries(boost_atomic
+target_link_libraries(boost_atomic
 #    PUBLIC
 #        Boost::assert
 #        Boost::config
 #        Boost::static_assert
 #        Boost::type_traits
-#    PRIVATE
+     PRIVATE
+         boost
 #        Boost::align
-#        Boost::predef
+#Boost::predef
 #        Boost::preprocessor
 #	
 #        Threads::Threads
-#)
+)
 
 if (WIN32)
     #target_link_libraries(boost_atomic
