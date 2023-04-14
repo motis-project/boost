@@ -1,5 +1,5 @@
-project(boost)
 cmake_minimum_required(VERSION 3.17)
+project(boost)
 
 include(cmake/pkg.cmake)
 
@@ -44,7 +44,7 @@ list(REMOVE_ITEM libs ${disabled-libs})
 list(REMOVE_ITEM libs ${manual-libs})
 
 foreach(lib ${libs})
-    file(GLOB_RECURSE boost-${lib}-files ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/**.cpp)
+    file(GLOB_RECURSE boost-${lib}-files ${CMAKE_CURRENT_SOURCE_DIR}/libs/${lib}/src/**.cpp)
 
     if (WIN32)
         file(GLOB unwanted-system-specific
