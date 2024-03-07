@@ -1014,11 +1014,16 @@ public:
 
     /** Construct from an initializer-list
 
-        If the initializer list consists of key/value
-        pairs, an @ref object is created. Otherwise
-        an @ref array is created. The contents of the
-        initializer list are copied to the newly constructed
-        value using the specified memory resource.
+        @li If the initializer list consists of key/value
+        pairs, an @ref object is created; otherwise,
+
+        @li if the size of the initializer list is exactly 1, the object is
+        constructed directly from that sole element; otherwise,
+
+        @li an @ref array is created.
+
+        The contents of the initializer list are copied to the newly
+        constructed value using the specified memory resource.
 
         @par Complexity
         Linear in `init.size()`.
@@ -1032,6 +1037,20 @@ public:
         @param sp A pointer to the @ref memory_resource
         to use. The container will acquire shared
         ownership of the memory resource.
+
+        @par Note
+        The previous behavior of this constructor was to always
+        construct either an @ref object or an @ref array. In practice though,
+        several C++ implementations did not treat `value{x}` as a constructor
+        from initializer list. This effectively resulted in different behavior
+        on different implementations. <br>
+
+        If you need the legacy behavior define macro
+        `BOOST_JSON_LEGACY_INIT_LIST_BEHAVIOR` when you are building the
+        library. The macro and the functionality will be deprecated in the
+        future and then removed, so we urge you to change your code for the new
+        behavior as soon as possible. The simplest way to create an @ref array
+        with 1 element using an initializer list is via `array{x}`.
     */
     BOOST_JSON_DECL
     value(
@@ -2440,10 +2459,13 @@ public:
 #endif
     to_number() const
     {
-        error_code ec;
-        auto result = to_number<T>(ec);
-        if(ec)
-            detail::throw_system_error( ec );
+        error e;
+        auto result = to_number<T>(e);
+        if( e != error() )
+        {
+            BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+            detail::throw_system_error( e, &loc );
+        }
         return result;
     }
 
@@ -2502,15 +2524,14 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_object()`
+        @throw system_error `! this->is_object()`
     */
     /* @{ */
     object&
     as_object() &
     {
-        if(! is_object())
-            detail::throw_invalid_argument( "not an object" );
-        return obj_;
+        auto const& self = *this;
+        return const_cast<object&>( self.as_object() );
     }
 
     object&&
@@ -2522,9 +2543,10 @@ public:
     object const&
     as_object() const&
     {
-        if(! is_object())
-            detail::throw_invalid_argument( "not an object" );
-        return obj_;
+        if( is_object() )
+            return obj_;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_object, &loc );
     }
     /* @} */
 
@@ -2540,15 +2562,14 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_array()`
+        @throw system_error `! this->is_array()`
     */
     /* @{ */
     array&
     as_array() &
     {
-        if(! is_array())
-            detail::throw_invalid_argument( "array required" );
-        return arr_;
+        auto const& self = *this;
+        return const_cast<array&>( self.as_array() );
     }
 
     array&&
@@ -2560,9 +2581,10 @@ public:
     array const&
     as_array() const&
     {
-        if(! is_array())
-            detail::throw_invalid_argument( "array required" );
-        return arr_;
+        if( is_array() )
+            return arr_;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_array, &loc );
     }
     /* @} */
 
@@ -2578,15 +2600,14 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_string()`
+        @throw system_error `! this->is_string()`
     */
     /* @{ */
     string&
     as_string() &
     {
-        if(! is_string())
-            detail::throw_invalid_argument( "not a string" );
-        return str_;
+        auto const& self = *this;
+        return const_cast<string&>( self.as_string() );
     }
 
     string&&
@@ -2598,9 +2619,10 @@ public:
     string const&
     as_string() const&
     {
-        if(! is_string())
-            detail::throw_invalid_argument( "not a string" );
-        return str_;
+        if( is_string() )
+            return str_;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_string, &loc );
     }
     /* @} */
 
@@ -2616,14 +2638,23 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_int64()`
+        @throw system_error `! this->is_int64()`
+
+        @par Note
+        This function is intended for direct access to the underlying object,
+        __if__ it has the type `std::int64_t`. It does not convert the
+        underlying object to type `std::int64_t` even if a lossless conversion
+        is possible. If you are not sure which kind your `value` has, and you
+        only care about getting a `std::int64_t` number, consider using
+        @ref to_number instead.
     */
     std::int64_t&
     as_int64()
     {
-        if(! is_int64())
-            detail::throw_invalid_argument( "not an int64" );
-        return sca_.i;
+        if( is_int64() )
+            return sca_.i;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_int64, &loc );
     }
 
     /** Return the underlying `std::int64_t`, or throw an exception.
@@ -2638,14 +2669,23 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_int64()`
+        @throw system_error `! this->is_int64()`
+
+        @par Note
+        This function is the const-qualified overload of @ref as_int64, which
+        is intended for direct access to the underlying object, __if__ it has
+        the type `std::int64_t`. It does not convert the underlying object to
+        type `std::int64_t` even if a lossless conversion is possible. If you
+        are not sure which kind your `value` has, and you only care about
+        getting a `std::int64_t` number, consider using @ref to_number instead.
     */
     std::int64_t
     as_int64() const
     {
-        if(! is_int64())
-            detail::throw_invalid_argument( "not an int64" );
-        return sca_.i;
+        if( is_int64() )
+            return sca_.i;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_int64, &loc );
     }
 
     /** Return a reference to the underlying `std::uint64_t`, or throw an exception.
@@ -2660,19 +2700,28 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_uint64()`
+        @throw system_error `! this->is_uint64()`
+
+        @par Note
+        This function is intended for direct access to the underlying object,
+        __if__ it has the type `std::uint64_t`. It does not convert the
+        underlying object to type `std::uint64_t` even if a lossless conversion
+        is possible. If you are not sure which kind your `value` has, and you
+        only care about getting a `std::uint64_t` number, consider using
+        @ref to_number instead.
     */
     std::uint64_t&
     as_uint64()
     {
-        if(! is_uint64())
-            detail::throw_invalid_argument( "not a uint64" );
-        return sca_.u;
+        if( is_uint64() )
+            return sca_.u;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_uint64, &loc );
     }
 
     /** Return the underlying `std::uint64_t`, or throw an exception.
 
-        If @ref is_int64() is `true`, returns
+        If @ref is_uint64() is `true`, returns
         the underlying `std::uint64_t`,
         otherwise throws an exception.
 
@@ -2682,14 +2731,24 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::length_error `! this->is_uint64()`
+        @throw system_error `! this->is_uint64()`
+
+        @par Note
+        This function is the const-qualified overload of @ref as_uint64, which
+        is intended for direct access to the underlying object, __if__ it has
+        the type `std::uint64_t`. It does not convert the underlying object to
+        type `std::uint64_t` even if a lossless conversion is possible. If you
+        are not sure which kind your `value` has, and you only care about
+        getting a `std::uint64_t` number, consider using
+        @ref to_number instead.
     */
     std::uint64_t
     as_uint64() const
     {
-        if(! is_uint64())
-            detail::throw_invalid_argument( "not a uint64" );
-        return sca_.u;
+        if( is_uint64() )
+            return sca_.u;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_uint64, &loc );
     }
 
     /** Return a reference to the underlying `double`, or throw an exception.
@@ -2704,19 +2763,27 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_double()`
+        @throw system_error `! this->is_double()`
+
+        @par Note
+        This function is intended for direct access to the underlying object,
+        __if__ it has the type `double`. It does not convert the underlying
+        object to type `double` even if a lossless conversion is possible. If
+        you are not sure which kind your `value` has, and you only care about
+        getting a `double` number, consider using @ref to_number instead.
     */
     double&
     as_double()
     {
-        if(! is_double())
-            detail::throw_invalid_argument( "not a double" );
-        return sca_.d;
+        if( is_double() )
+            return sca_.d;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_double, &loc );
     }
 
     /** Return the underlying `double`, or throw an exception.
 
-        If @ref is_int64() is `true`, returns
+        If @ref is_double() is `true`, returns
         the underlying `double`,
         otherwise throws an exception.
 
@@ -2726,14 +2793,23 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_double()`
+        @throw system_error `! this->is_double()`
+
+        @par Note
+        This function is the const-qualified overload of @ref as_double, which
+        is intended for direct access to the underlying object, __if__ it has
+        the type `double`. It does not convert the underlying object to type
+        `double` even if a lossless conversion is possible. If you are not sure
+        which kind your `value` has, and you only care about getting a `double`
+        number, consider using @ref to_number instead.
     */
     double
     as_double() const
     {
-        if(! is_double())
-            detail::throw_invalid_argument( "not a double" );
-        return sca_.d;
+        if( is_double() )
+            return sca_.d;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_double, &loc );
     }
 
     /** Return a reference to the underlying `bool`, or throw an exception.
@@ -2748,14 +2824,15 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_bool()`
+        @throw system_error `! this->is_bool()`
     */
     bool&
     as_bool()
     {
-        if(! is_bool())
-            detail::throw_invalid_argument( "bool required" );
-        return sca_.b;
+        if( is_bool() )
+            return sca_.b;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_bool, &loc );
     }
 
     /** Return the underlying `bool`, or throw an exception.
@@ -2770,14 +2847,15 @@ public:
         @par Exception Safety
         Strong guarantee.
 
-        @throw std::invalid_argument `! this->is_bool()`
+        @throw system_error `! this->is_bool()`
     */
     bool
     as_bool() const
     {
-        if(! is_bool())
-            detail::throw_invalid_argument( "bool required" );
-        return sca_.b;
+        if( is_bool() )
+            return sca_.b;
+        BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+        detail::throw_system_error( error::not_bool, &loc );
     }
 
     //------------------------------------------------------
@@ -3854,7 +3932,10 @@ public:
         : value_(std::forward<Args>(args)...)
     {
         if(key.size() > string::max_size())
-            detail::throw_length_error( "key too large" );
+        {
+            BOOST_STATIC_CONSTEXPR source_location loc = BOOST_CURRENT_LOCATION;
+            detail::throw_system_error( error::key_too_large, &loc );
+        }
         auto s = reinterpret_cast<
             char*>(value_.storage()->
                 allocate(key.size() + 1, alignof(char)));
