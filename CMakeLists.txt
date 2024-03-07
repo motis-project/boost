@@ -87,6 +87,7 @@ endforeach()
 
 target_link_libraries(boost-iostreams zlibstatic)
 target_compile_features(boost-url PUBLIC cxx_constexpr)
+target_compile_features(boost-program_options PUBLIC cxx_std_11)
 
 if (MSVC)
   target_compile_definitions(boost INTERFACE BOOST_ASIO_HAS_ALIGNOF=1)
