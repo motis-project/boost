@@ -36,6 +36,7 @@ set(disabled-libs
 set(manual-libs
     atomic
     filesystem
+    stacktrace
 )
 
 file(GLOB libs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/libs ${CMAKE_CURRENT_SOURCE_DIR}/libs/*)

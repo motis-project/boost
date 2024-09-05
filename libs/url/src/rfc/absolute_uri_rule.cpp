@@ -7,8 +7,6 @@
 // Official repository: https://github.com/boostorg/url
 //
 
-#ifndef BOOST_URL_RFC_IMPL_ABSOLUTE_URI_RULE_IPP
-#define BOOST_URL_RFC_IMPL_ABSOLUTE_URI_RULE_IPP
 
 #include <boost/url/detail/config.hpp>
 #include <boost/url/rfc/absolute_uri_rule.hpp>
@@ -16,9 +14,9 @@
 #include <boost/url/grammar/tuple_rule.hpp>
 #include <boost/url/grammar/optional_rule.hpp>
 #include <boost/url/grammar/parse.hpp>
-#include <boost/url/rfc/detail/hier_part_rule.hpp>
-#include <boost/url/rfc/detail/query_part_rule.hpp>
-#include <boost/url/rfc/detail/scheme_rule.hpp>
+#include "detail/hier_part_rule.hpp"
+#include "detail/query_part_rule.hpp"
+#include "detail/scheme_rule.hpp"
 #include <utility>
 
 namespace boost {
@@ -83,4 +81,3 @@ parse(
 } // urls
 } // boost
 
-#endif

@@ -7,14 +7,12 @@
 // Official repository: https://github.com/boostorg/url
 //
 
-#ifndef BOOST_URL_RFC_IMPL_ORIGIN_FORM_RULE_IPP
-#define BOOST_URL_RFC_IMPL_ORIGIN_FORM_RULE_IPP
 
 #include <boost/url/detail/config.hpp>
 #include <boost/url/rfc/origin_form_rule.hpp>
 #include <boost/url/rfc/query_rule.hpp>
-#include <boost/url/rfc/detail/path_rules.hpp>
-#include <boost/url/rfc/detail/query_part_rule.hpp>
+#include "boost/url/rfc/detail/path_rules.hpp"
+#include "detail/query_part_rule.hpp"
 #include <boost/url/grammar/delim_rule.hpp>
 #include <boost/url/grammar/range_rule.hpp>
 #include <boost/url/grammar/tuple_rule.hpp>
@@ -69,4 +67,3 @@ parse(
 } // urls
 } // boost
 
-#endif

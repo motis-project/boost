@@ -8,15 +8,13 @@
 // Official repository: https://github.com/boostorg/url
 //
 
-#ifndef BOOST_URL_IMPL_URL_VIEW_BASE_IPP
-#define BOOST_URL_IMPL_URL_VIEW_BASE_IPP
 
 #include <boost/url/detail/config.hpp>
 #include <boost/url/url_view_base.hpp>
 #include <boost/url/url_view.hpp>
 #include <boost/url/detail/except.hpp>
-#include <boost/url/detail/normalize.hpp>
-#include <boost/url/detail/over_allocator.hpp>
+#include "detail/normalize.hpp"
+#include "detail/over_allocator.hpp"
 
 namespace boost {
 namespace urls {
@@ -731,4 +729,3 @@ compare(const url_view_base& other) const noexcept
 } // urls
 } // boost
 
-#endif

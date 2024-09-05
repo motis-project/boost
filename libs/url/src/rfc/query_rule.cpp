@@ -7,12 +7,10 @@
 // Official repository: https://github.com/boostorg/url
 //
 
-#ifndef BOOST_URL_RFC_IMPL_QUERY_RULE_IPP
-#define BOOST_URL_RFC_IMPL_QUERY_RULE_IPP
 
 #include <boost/url/detail/config.hpp>
 #include <boost/url/rfc/query_rule.hpp>
-#include <boost/url/rfc/detail/charsets.hpp>
+#include "detail/charsets.hpp"
 #include <boost/url/error.hpp>
 #include <boost/url/grammar/hexdig_chars.hpp>
 
@@ -83,4 +81,3 @@ parse(
 } // urls
 } // boost
 
-#endif
