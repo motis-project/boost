@@ -135,7 +135,7 @@ struct co_spawn_post
 };
 
 template <typename T, typename Handler, typename Executor, typename Function>
-awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
+inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
     awaitable<T, Executor>*, co_spawn_state<Handler, Executor, Function> s)
 {
   (void) co_await co_spawn_dispatch{};
@@ -191,7 +191,7 @@ awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
 }
 
 template <typename Handler, typename Executor, typename Function>
-awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
+inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
     awaitable<void, Executor>*, co_spawn_state<Handler, Executor, Function> s)
 {
   (void) co_await co_spawn_dispatch{};
