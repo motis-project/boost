@@ -1,4 +1,4 @@
-[zlib]
-  url=git@github.com:motis-project/zlib.git
-  branch=master
-  commit=1e1dfdedddb54a2e2cb8fec3b67f925233c495aa
+[zlib-ng]
+  url=git@github.com:motis-project/zlib-ng.git
+  branch=develop
+  commit=68ab3e2d80253ec5dc3c83691d9ff70477b32cd3
