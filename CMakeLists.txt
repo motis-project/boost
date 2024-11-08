@@ -93,4 +93,6 @@ target_compile_features(boost-json PUBLIC cxx_constexpr)
 
 if (MSVC)
   target_compile_definitions(boost INTERFACE BOOST_ASIO_HAS_ALIGNOF=1)
+  target_compile_definitions(boost-cobalt PUBLIC _WIN32_WINNT=0x0601)
+  target_compile_features(boost-cobalt PUBLIC cxx_std_23)
 endif()
