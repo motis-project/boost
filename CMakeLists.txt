@@ -17,6 +17,17 @@ if (WIN32)
     )
 endif()
 
+add_library(Boost::assert ALIAS boost)
+add_library(Boost::config ALIAS boost)
+add_library(Boost::core ALIAS boost)
+add_library(Boost::intrusive ALIAS boost)
+add_library(Boost::predef ALIAS boost)
+add_library(Boost::smart_ptr ALIAS boost)
+add_library(Boost::algorithm ALIAS boost)
+add_library(Boost::format ALIAS boost)
+add_library(Boost::mp11 ALIAS boost)
+add_library(Boost::pool ALIAS boost)
+
 # these libraries don't compile with this generic config
 set(disabled-libs
     context
@@ -34,6 +45,8 @@ set(disabled-libs
 )
 
 set(manual-libs
+    context
+    fiber
     atomic
     filesystem
     stacktrace
