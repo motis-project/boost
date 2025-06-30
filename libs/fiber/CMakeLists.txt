@@ -44,8 +44,6 @@ add_library(boost_fiber
 
 add_library(Boost::fiber ALIAS boost_fiber)
 
-target_include_directories(boost_fiber PUBLIC include)
-
 target_link_libraries(boost_fiber
   PUBLIC
     Boost::assert
