@@ -22,11 +22,7 @@ function(stacktrace_add_library suffix opt libs defs)
 
   target_link_libraries(boost_stacktrace_${suffix}
     PUBLIC
-      Boost::config
-      Boost::container_hash
-      Boost::core
-      Boost::predef
-      Boost::winapi
+      boost
     PRIVATE
       ${libs}
   )

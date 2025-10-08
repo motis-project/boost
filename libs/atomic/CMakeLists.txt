@@ -84,14 +84,15 @@ target_include_directories(boost_atomic PUBLIC include)
 target_include_directories(boost_atomic PRIVATE src)
 
 target_link_libraries(boost_atomic
-    PUBLIC
-        Boost::assert
-        Boost::config
-        Boost::predef
-        Boost::type_traits
-    PRIVATE
-        Boost::align
-        Boost::preprocessor
+#    PUBLIC
+#        Boost::assert
+#        Boost::config
+#        Boost::type_traits
+     PRIVATE
+#        Boost::align
+#        Boost::predef
+#        Boost::preprocessor
+        boost
 
         Threads::Threads
 )
@@ -99,7 +100,7 @@ target_link_libraries(boost_atomic
 if (WIN32)
     target_link_libraries(boost_atomic
         PUBLIC
-            Boost::winapi
+            #Boost::winapi
 
             synchronization
     )
