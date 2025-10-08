@@ -19,7 +19,7 @@
 #endif
 
 #if BOOST_COMP_MSVC && !defined(_M_ARM) && !defined(_M_ARM64)
-#include <xmmintrin.h>
+#include <mmintrin.h>
 #endif
 
 #ifdef BOOST_HAS_ABI_HEADERS

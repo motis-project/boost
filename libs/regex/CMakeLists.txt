@@ -17,21 +17,19 @@ option(BOOST_REGEX_STANDALONE "Boost.Regex: Enable Standalone Mode (i.e. no Boos
 
 if(NOT BOOST_REGEX_STANDALONE)
 
-   #target_link_libraries(boost_regex
-   #  INTERFACE
-   #    Boost::config
-   #    Boost::throw_exception
-   #    Boost::predef
-   #    Boost::assert
-   #)
-   target_link_libraries(boost_regex PUBLIC boost)
+   target_link_libraries(boost_regex
+     INTERFACE
+       Boost::config
+       Boost::throw_exception
+       Boost::predef
+       Boost::assert
+   )
 
 else()
 
    target_compile_definitions(boost_regex
      INTERFACE BOOST_REGEX_STANDALONE
    )
-   target_link_libraries(boost_regex PUBLIC boost)
 
 endif()
 
@@ -47,14 +45,13 @@ if(ICU_FOUND)
 
    if(NOT BOOST_REGEX_STANDALONE)
 
-      #target_link_libraries(boost_regex_icu
-      #  INTERFACE
-      #    Boost::config
-      #    Boost::throw_exception
-      #    Boost::predef
-      #    Boost::assert
-      #)
-      target_link_libraries(boost_regex PUBLIC boost)
+      target_link_libraries(boost_regex_icu
+        INTERFACE
+          Boost::config
+          Boost::throw_exception
+          Boost::predef
+          Boost::assert
+      )
 
    else()
 

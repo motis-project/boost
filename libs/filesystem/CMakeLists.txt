@@ -7,7 +7,7 @@
 # NOTE: CMake support for Boost.Filesystem is currently experimental at best
 #       and the interface is likely to change in the future
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.5...3.16)
 project(BoostFilesystem VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
 include(CheckCXXSourceCompiles)
@@ -142,6 +142,7 @@ endif()
 if(WIN32 OR CYGWIN)
     target_compile_definitions(boost_filesystem PRIVATE
         BOOST_USE_WINDOWS_H
+        _WIN32_WINNT=0x0A00
         WIN32_LEAN_AND_MEAN
         NOMINMAX
     )
@@ -224,24 +225,23 @@ if(BOOST_FILESYSTEM_HAS_FALLOCATE)
     target_compile_definitions(boost_filesystem PRIVATE BOOST_FILESYSTEM_HAS_FALLOCATE)
 endif()
 
-#target_link_libraries(boost_filesystem
-#    PUBLIC
-#        Boost::assert
-#        Boost::config
-#        Boost::container_hash
-#        Boost::detail
-#        Boost::io
-#        Boost::iterator
-#        Boost::smart_ptr
-#        Boost::system
-#        Boost::type_traits
-#
-#    PRIVATE
-#        Boost::core
-#        Boost::predef
-#        Boost::scope
-#)
-target_link_libraries(boost_filesystem PUBLIC boost)
+target_link_libraries(boost_filesystem
+    PUBLIC
+        Boost::assert
+        Boost::config
+        Boost::container_hash
+        Boost::detail
+        Boost::io
+        Boost::iterator
+        Boost::smart_ptr
+        Boost::system
+        Boost::type_traits
+
+    PRIVATE
+        Boost::core
+        Boost::predef
+        Boost::scope
+)
 
 if(NOT BOOST_FILESYSTEM_HAS_CXX20_ATOMIC_REF)
     target_compile_definitions(boost_filesystem PRIVATE BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
@@ -264,8 +264,8 @@ if(WIN32)
         endif()
     endif()
 
-    #target_link_libraries(boost_filesystem
-    #    PRIVATE
-    #        Boost::winapi
-    #)
+    target_link_libraries(boost_filesystem
+        PRIVATE
+            Boost::winapi
+    )
 endif()

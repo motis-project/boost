@@ -27,8 +27,9 @@ int main()
 {
     __float128 f = -2.0Q;
     f = fabsq(f);
+    __float128 big = HUGE_VALQ;
 
-    return 0;
+    return f == big;
 }
 ")
 
@@ -38,15 +39,14 @@ set(CMAKE_REQUIRED_LIBRARIES "")
 
 target_link_libraries(boost_charconv
   PUBLIC
-#    Boost::config
-#    Boost::assert
-#    Boost::core
-    boost
+    Boost::config
+    Boost::assert
+    Boost::core
 )
 
-if(NOT BOOST_CHARCONV_QUADMATH_FOUND)
+# Check to see if the user specified BOOST_CHARCONV_NO_QUADMATH even with quadmath support being available
+if(NOT BOOST_CHARCONV_QUADMATH_FOUND OR BOOST_CHARCONV_NO_QUADMATH)
   message(STATUS "Boost.Charconv: quadmath support OFF")
-  target_compile_definitions(boost_charconv PUBLIC BOOST_CHARCONV_NO_QUADMATH)
 else()
   message(STATUS "Boost.Charconv: quadmath support ON")
   target_compile_definitions(boost_charconv PUBLIC BOOST_CHARCONV_HAS_QUADMATH)
@@ -67,7 +67,7 @@ else()
 endif()
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
-
+  
   add_subdirectory(test)
 
 endif()

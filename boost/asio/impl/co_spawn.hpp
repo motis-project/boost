@@ -2,7 +2,7 @@
 // impl/co_spawn.hpp
 // ~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2024 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -135,12 +135,11 @@ struct co_spawn_post
 };
 
 template <typename T, typename Handler, typename Executor, typename Function>
-inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
+awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
     awaitable<T, Executor>*, co_spawn_state<Handler, Executor, Function> s)
 {
   (void) co_await co_spawn_dispatch{};
 
-  (co_await awaitable_thread_has_context_switched{}) = false;
   std::exception_ptr e = nullptr;
   bool done = false;
 #if !defined(BOOST_ASIO_NO_EXCEPTIONS)
@@ -151,8 +150,8 @@ inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
 
     done = true;
 
-    bool switched = (co_await awaitable_thread_has_context_switched{});
-    if (!switched)
+    bool is_launching = (co_await awaitable_thread_is_launching{});
+    if (is_launching)
     {
       co_await this_coro::throw_if_cancelled(false);
       (void) co_await co_spawn_post();
@@ -176,8 +175,8 @@ inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
   }
 #endif // !defined(BOOST_ASIO_NO_EXCEPTIONS)
 
-  bool switched = (co_await awaitable_thread_has_context_switched{});
-  if (!switched)
+  bool is_launching = (co_await awaitable_thread_is_launching{});
+  if (is_launching)
   {
     co_await this_coro::throw_if_cancelled(false);
     (void) co_await co_spawn_post();
@@ -191,12 +190,11 @@ inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
 }
 
 template <typename Handler, typename Executor, typename Function>
-inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
+awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
     awaitable<void, Executor>*, co_spawn_state<Handler, Executor, Function> s)
 {
   (void) co_await co_spawn_dispatch{};
 
-  (co_await awaitable_thread_has_context_switched{}) = false;
   std::exception_ptr e = nullptr;
 #if !defined(BOOST_ASIO_NO_EXCEPTIONS)
   try
@@ -211,8 +209,8 @@ inline awaitable<awaitable_thread_entry_point, Executor> co_spawn_entry_point(
   }
 #endif // !defined(BOOST_ASIO_NO_EXCEPTIONS)
 
-  bool switched = (co_await awaitable_thread_has_context_switched{});
-  if (!switched)
+  bool is_launching = (co_await awaitable_thread_is_launching{});
+  if (is_launching)
   {
     co_await this_coro::throw_if_cancelled(false);
     (void) co_await co_spawn_post();

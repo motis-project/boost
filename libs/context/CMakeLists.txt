@@ -50,7 +50,7 @@ unset(_default_abi)
 
 ## Arch-and-model
 
-set(_all_archs arm arm64 loongarch64 mips32 mips64 ppc32 ppc64 riscv64 s390x i386 x86_64 combined)
+set(_all_archs arm arm64 loongarch64 mips32 mips64 power riscv64 s390x i386 x86_64 combined)
 
 # Try at start to auto determine arch from CMake.
 if(CMAKE_SYSTEM_PROCESSOR IN_LIST _all_archs)
@@ -74,7 +74,7 @@ else()
   endif()
 endif()
 
-set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.Context architecture (arm, arm64, loongarch64, mips32, mips64, ppc32, ppc64, riscv64, s390x, i386, x86_64, combined)")
+set(BOOST_CONTEXT_ARCHITECTURE "${_default_arch}" CACHE STRING "Boost.Context architecture (arm, arm64, loongarch64, mips32, mips64, power, riscv64, s390x, i386, x86_64, combined)")
 set_property(CACHE BOOST_CONTEXT_ARCHITECTURE PROPERTY STRINGS ${_all_archs})
 
 unset(_all_archs)
@@ -89,18 +89,22 @@ if(MSVC)
   else()
     set(_default_asm masm)
   endif()
+elseif(BOOST_CONTEXT_ARCHITECTURE STREQUAL arm64 AND MINGW)
+  set(_default_asm armclang)
 else()
   set(_default_asm gas)
 endif()
 
-set(BOOST_CONTEXT_ASSEMBLER "${_default_asm}" CACHE STRING "Boost.Context assembler (masm, gas, armasm)")
-set_property(CACHE BOOST_CONTEXT_ASSEMBLER PROPERTY STRINGS masm gas armasm)
+set(BOOST_CONTEXT_ASSEMBLER "${_default_asm}" CACHE STRING "Boost.Context assembler (masm, gas, armasm, armclang)")
+set_property(CACHE BOOST_CONTEXT_ASSEMBLER PROPERTY STRINGS masm gas armasm armclang)
 
 unset(_default_asm)
 
 ## Assembler source suffix
 
-if(BOOST_CONTEXT_BINARY_FORMAT STREQUAL pe)
+if(BOOST_CONTEXT_ASSEMBLER STREQUAL armclang)
+  set(_default_ext .S)
+elseif(BOOST_CONTEXT_BINARY_FORMAT STREQUAL pe)
   set(_default_ext .asm)
 elseif(BOOST_CONTEXT_ASSEMBLER STREQUAL gas)
   set(_default_ext .S)
@@ -133,18 +137,18 @@ message(STATUS "Boost.Context: "
   "implementation ${BOOST_CONTEXT_IMPLEMENTATION}")
 
 # Enable the right assembler
-
+set(ASM_LANGUAGE)
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
-  if(BOOST_CONTEXT_ASSEMBLER STREQUAL gas)
+  if(BOOST_CONTEXT_ASSEMBLER STREQUAL gas OR BOOST_CONTEXT_ASSEMBLER STREQUAL armclang)
     if(CMAKE_CXX_PLATFORM_ID MATCHES "Cygwin")
-      enable_language(ASM-ATT)
+      set(ASM_LANGUAGE ASM-ATT)
     else()
-      enable_language(ASM)
+      set(ASM_LANGUAGE ASM)
     endif()
   elseif(BOOST_CONTEXT_ASSEMBLER STREQUAL armasm)
-    enable_language(ASM_ARMASM)
+    set(ASM_LANGUAGE ASM_ARMASM)
   else()
-    enable_language(ASM_MASM)
+    set(ASM_LANGUAGE ASM_MASM)
   endif()
 endif()
 
@@ -168,15 +172,30 @@ unset(_asm_suffix)
 
 if(BOOST_CONTEXT_IMPLEMENTATION STREQUAL "fcontext")
 
-  set(IMPL_SOURCES ${ASM_SOURCES})
+  set(IMPL_SOURCES ${ASM_SOURCES} src/fcontext.cpp)
 
-  if(BOOST_CONTEXT_ASSEMBLER STREQUAL masm AND BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
-      set_source_files_properties(${ASM_SOURCES} PROPERTIES COMPILE_FLAGS "/safeseh")
-  endif()
+  if(BOOST_CONTEXT_ASSEMBLER STREQUAL masm)
 
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
-  endif()
+    set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/nologo")
+
+    if(MSVC AND NOT(MSVC_VERSION LESS 1936) AND NOT(CMAKE_CXX_SIMULATE_VERSION))
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/quiet")
+    endif()
+
+    if(BOOST_CONTEXT_ARCHITECTURE STREQUAL i386)
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "/safeseh")
+    endif()
+
+  else() # masm
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-x" "assembler-with-cpp")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      set_property(SOURCE ${ASM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "-Wno-unused-command-line-argument")
+    endif()
+  endif() # masm
+
+  enable_language(${ASM_LANGUAGE})
+  set_source_files_properties(${ASM_SOURCES} PROPERTIES LANGUAGE ${ASM_LANGUAGE})
 else()
   set(IMPL_SOURCES
     src/continuation.cpp
@@ -200,6 +219,8 @@ add_library(boost_context
 )
 
 add_library(Boost::context ALIAS boost_context)
+
+target_include_directories(boost_context PUBLIC include)
 
 target_link_libraries(boost_context
   PUBLIC
