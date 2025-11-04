@@ -18,6 +18,8 @@ function(stacktrace_add_library suffix opt libs defs)
 
   add_library(Boost::stacktrace_${suffix} ALIAS boost_stacktrace_${suffix})
 
+  target_compile_features(boost_stacktrace_${suffix} PUBLIC cxx_std_17)
+
   target_include_directories(boost_stacktrace_${suffix} PUBLIC include)
 
   target_link_libraries(boost_stacktrace_${suffix}
