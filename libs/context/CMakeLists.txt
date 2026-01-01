@@ -220,8 +220,6 @@ add_library(boost_context
 
 add_library(Boost::context ALIAS boost_context)
 
-target_include_directories(boost_context PUBLIC include)
-
 target_link_libraries(boost_context
   PUBLIC
     Boost::assert
