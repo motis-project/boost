@@ -9,6 +9,14 @@ target_compile_definitions(boost INTERFACE
     BOOST_BIND_GLOBAL_PLACEHOLDERS=1
     BOOST_ALL_NO_LIB=1
 )
+
+# Registers fiber/coroutine stacks with valgrind so memcheck tracks stack
+# switches instead of flooding uninitialised-value false positives. Must be
+# defined globally: it adds a member to boost::context::stack_context.
+option(BOOST_VALGRIND "define BOOST_USE_VALGRIND (needs valgrind/valgrind.h)" OFF)
+if (BOOST_VALGRIND)
+    target_compile_definitions(boost INTERFACE BOOST_USE_VALGRIND=1)
+endif()
 if (WIN32)
     target_compile_definitions(boost INTERFACE
         BOOST_THREAD_BUILD_LIB=1
