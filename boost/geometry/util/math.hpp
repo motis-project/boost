@@ -870,7 +870,10 @@ inline void sin_cos_degrees(T const& x,
     T const s = sin(remainder);
     T const c = cos(remainder);
 
-    switch (unsigned(quotient) & 3U)
+    // quotient is in [-4, 4]: double -> unsigned is undefined for negative
+    // values (x86-64 happens to wrap, arm64 saturates to 0), int -> unsigned
+    // is modulo 2^n
+    switch (static_cast<unsigned>(static_cast<int>(quotient)) & 3U)
     {
         case 0U: sinx =  s; cosx =  c; break;
         case 1U: sinx =  c; cosx = -s; break;
